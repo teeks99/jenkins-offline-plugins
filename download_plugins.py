@@ -1,6 +1,7 @@
 import json
 import urllib.request
 import os
+import argparse
 
 official_update_list = "https://updates.jenkins.io/update-center.json"
 official_plugin_location = "https://updates.jenkins-ci.org/download/plugins/"
@@ -60,8 +61,28 @@ class JenkinsDownloader(object):
                 out.write(f.read())
 
 if __name__ == "__main__":
-    with open("config.json") as f:
-        start_data = json.load(f)
+    description = 'Download Jenkins plugins for an offline installation.'
+    description += ' This will take the input list of plugins and recursively'
+    description += ' find the dependencies needed for them.'
+
+    parser = argparse.ArgumentParser(
+        description=description)
+    parser.add_argument('-u', '--update-list', default=official_update_list,
+                        help='update list to use')
+    parser.add_argument('-d', '--plugin-location',
+                        default=official_plugin_location,
+                        help='location to download plugins from')
+    parser.add_argument('-c', '--config', default=None,
+                        help='config file with options')
+    parser.add_argument('-p', '--plugin', store="append",
+                        help='plugin to search for')
+
+    args = parser.parse_args()
+
+
+    if args.config:
+        with open(args.config) as f:
+            start_data = json.load(f)
 
     j = JenkinsDownloader(
         update_list=start_data["update_list"],
