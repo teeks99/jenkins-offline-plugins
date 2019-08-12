@@ -45,17 +45,31 @@ class JenkinsDownloader(object):
         if self._update_data_cache:
             return self._update_data_cache["plugins"]
 
-        r = urllib.request.Request(self.update_list, headers=self.headers)
-        with urllib.request.urlopen(r) as f:
-            lines = f.readlines()
-            assert lines[0] == b"updateCenter.post(\n"
-            assert lines[2] == b");"
-            self._update_data_cache = json.loads(lines[1].strip())
+        lines = []
+        if self.update_list.startswith("http"):
+            r = urllib.request.Request(self.update_list, headers=self.headers)
+            with urllib.request.urlopen(r) as f:
+                lines = f.readlines()
+        else:
+            with open(self.update_list, "rb") as f:
+                lines = f.readlines()
+        
+        assert lines[0] == b"updateCenter.post(\n"
+        assert lines[2] == b");"
+        self._update_data_cache = json.loads(lines[1].strip())
         
         return self._update_data_cache["plugins"]
 
     def url(self, data):
-        return data["url"]
+        insecure_offical_plugins = "http" + official_plugin_location[5:]
+
+        tail = ""
+        original_url = data["url"]
+        if original_url.startswith("http://"):
+            tail = original_url.split(insecure_offical_plugins)[1]
+        else:
+            tail = original_url.split(official_plugin_location)[1]
+        return self.plugin_location + tail
 
     def download_all(self, download_location):
         if not os.path.isdir(download_location):
@@ -66,13 +80,22 @@ class JenkinsDownloader(object):
 
     def download_file(self, url, download_location):
         print("Getting: " + url)
-        r = urllib.request.Request(url, headers=self.headers)
-        with urllib.request.urlopen(r) as f:
-            fname = os.path.basename(f.geturl())
-            full_loc = os.path.join(download_location, fname)
-            print(" to " + full_loc)
-            with open(full_loc, 'wb') as out:
-                out.write(f.read())
+        if url.startswith("http"):
+            r = urllib.request.Request(url, headers=self.headers)
+            with urllib.request.urlopen(r) as f:
+                fname = os.path.basename(f.geturl())
+                full_loc = os.path.join(download_location, fname)
+                self.copy_file_local(f, full_loc)
+        else:
+            with open(url, "rb") as f:
+                fname = os.path.split(url)
+                full_loc = os.path.join(download_location, fname)
+                self.copy_file_local(f, full_loc)
+
+    def copy_file_local(self, fileobj, output_location):
+            print(" to " + output_location)
+            with open(output_location, 'wb') as out:
+                out.write(fileobj.read())
 
 if __name__ == "__main__":
     description = 'Download Jenkins plugins for an offline installation.'
