@@ -1,0 +1,8 @@
+{
+    "update_list": "https://updates.jenkins.io/update-center.json",
+    "plugin_location": "https://updates.jenkins-ci.org/download/plugins/",
+    "plugins": [
+        "sweagle",
+        "tag-profiler"
+    ]
+}
