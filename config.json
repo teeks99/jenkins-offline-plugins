@@ -3,6 +3,7 @@
     "plugin_location": "https://updates.jenkins-ci.org/download/plugins/",
     "plugins": [
         "sweagle",
-        "tag-profiler"
+        "tag-profiler",
+        "matrix-auth"
     ]
 }
